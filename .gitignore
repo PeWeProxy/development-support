@@ -1,0 +1,9 @@
+.classpath
+.project
+.settings
+conf
+htdocs
+plugins
+bin
+logs
+filter.txt
