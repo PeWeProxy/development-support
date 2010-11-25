@@ -105,6 +105,11 @@ public class Bootstrap {
 			throw new IllegalStateException("Could not create a directory: " + logDir.getAbsolutePath());
 		}
 	}
+	
+	private static void copyCommonFiles() throws IOException {
+		FileUtils.cp(new File("common/plugins_ordering"), new File("plugins/plugins_ordering"));
+		FileUtils.cp(new File("common/variables.xml"), new File("plugins/variables.xml"));
+	}
 
 	public static void main(String[] args) throws Exception {
 		Collection<File> baseCPEntries = loadBaseCPEntries();
@@ -115,6 +120,8 @@ public class Bootstrap {
 		
 		discoverAndCopyBundlePlugins(baseCPEntries);
 		discoverAndCopyBundleAssets(baseCPEntries);
+		
+		copyCommonFiles();
 		
 		ProxyStarter.main(args);
 	}

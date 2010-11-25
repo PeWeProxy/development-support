@@ -11,8 +11,8 @@ This is a way to comfortably run proxy with multiple bundles.
 Do this once, then start proxy via sk.fiit.peweproxy.Bootstrap 
     
 Shortcomings:
-	- variables.xml are overwritten -> last bundle wins
-	- plugins_ordering from bundles is ignored
+	- We need a way to merge variables.xml and plugins_ordering from multiple bundles. 
+	  For now, these are copied from this project's "common" directory.
 	
     
  
