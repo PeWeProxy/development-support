@@ -23,24 +23,24 @@ public class FileUtils {
 	}
 	
 	public static void cp_r(File source, File target) throws IOException {
-		if(!source.isDirectory()) {
-			throw new IllegalArgumentException(source.getAbsolutePath() + " is not a directory");
-		}
-		
-		if(!target.exists()) {
-			if(!target.mkdir()) {
-				throw new IllegalStateException("Could not create a directory: " + target.getAbsolutePath());
+		if(source.isDirectory()) {
+			if(!target.exists()) {
+				if(!target.mkdir()) {
+					throw new IllegalStateException("Could not create a directory: " + target.getAbsolutePath());
+				}
 			}
-		}
-		
-		for(File f : source.listFiles()) {
-			File targetF = new File(target.getAbsolutePath() + File.separator + f.getName()); 
-			if(f.isFile()) {
-				cp(f, targetF);
+			
+			for(File f : source.listFiles()) {
+				File targetF = new File(target.getAbsolutePath() + File.separator + f.getName()); 
+				if(f.isFile()) {
+					cp(f, targetF);
+				}
+				if(f.isDirectory()) {
+					cp_r(f, targetF);
+				}
 			}
-			if(f.isDirectory()) {
-				cp_r(f, targetF);
-			}
+		} else {
+			cp(source, target);
 		}
 	}
 	static public boolean rm_r(File path) {

@@ -61,12 +61,14 @@ public class Bootstrap {
 				File[] plugins = file.listFiles(new FilenameFilter() {
 					@Override
 					public boolean accept(File dir, String name) {
-						return name.endsWith(".xml");
+						return !("plugins_ordering".equals(name) ||
+								 "variables.xml".equals(name) ||
+								 name.endsWith(".dtd"));
 					}
 				});
 				
 				for (File plugin : plugins) {					
-					FileUtils.cp(plugin, new File("plugins" + File.separator + plugin.getName()));
+					FileUtils.cp_r(plugin, new File("plugins" + File.separator + plugin.getName()));
 				}				
 				discoveredDirectory = file;
 			}
