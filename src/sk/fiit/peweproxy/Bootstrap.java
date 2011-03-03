@@ -1,6 +1,7 @@
 package sk.fiit.peweproxy;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
@@ -9,7 +10,15 @@ import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+
 import rabbit.proxy.ProxyStarter;
+import sk.fiit.peweproxy.utils.XMLFileParser;
 
 public class Bootstrap {
 	private static final String PROXY_PROJECT_NAME = "adaptive-proxy";
@@ -108,9 +117,57 @@ public class Bootstrap {
 		}
 	}
 	
+	private static void discoverAndMergeVariables(Collection<File> baseCPEntries) throws IOException {
+		File discoveredDirectory = null;
+		Document document = XMLFileParser.parseFile(new File("common/variables.xml"));		
+		
+		for (File file : baseCPEntries) {
+			if(file.getAbsolutePath().endsWith("plugins")) {
+				File[] variablesFiles = file.listFiles(new FilenameFilter() {
+					@Override
+					public boolean accept(File dir, String name) {
+						return ("variables.xml".equals(name));
+					}
+				});
+				
+				for (File variablesFile : variablesFiles){
+					System.out.println(variablesFile.getAbsoluteFile());
+					
+					Document bundleDocument = XMLFileParser.parseFile(variablesFile.getAbsoluteFile());
+	
+					// magic
+					Node variableElement = bundleDocument.getDocumentElement().getFirstChild().getNextSibling();
+					
+					while (variableElement != null){
+						System.out.println(variableElement.hasAttributes());
+						
+						Element element = document.createElement("variable");
+						element.setAttribute("name", variableElement.getAttributes().getNamedItem("name").getNodeValue());
+						element.setTextContent(variableElement.getTextContent());
+						
+						document.getDocumentElement().appendChild(element);
+						variableElement = variableElement.getNextSibling().getNextSibling();
+					}
+				}
+				discoveredDirectory = file;
+			}
+		}
+		
+		OutputFormat format = new OutputFormat(document);
+		format.setIndenting(true);
+		XMLSerializer serializer = new XMLSerializer(
+				new FileOutputStream(new File("plugins/merged_variables.xml")), format); 
+		
+		serializer.serialize(document);
+		
+		if(discoveredDirectory != null) {
+			System.out.println(baseCPEntries);
+			baseCPEntries.remove(discoveredDirectory);
+		}
+	}
+	
 	private static void copyCommonFiles() throws IOException {
 		FileUtils.cp(new File("common/plugins_ordering"), new File("plugins/plugins_ordering"));
-		FileUtils.cp(new File("common/variables.xml"), new File("plugins/variables.xml"));
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -123,6 +180,7 @@ public class Bootstrap {
 		discoverAndCopyBundlePlugins(baseCPEntries);
 		discoverAndCopyBundleAssets(baseCPEntries);
 		
+		discoverAndMergeVariables(baseCPEntries);
 		copyCommonFiles();
 		
 		ProxyStarter.main(args);
