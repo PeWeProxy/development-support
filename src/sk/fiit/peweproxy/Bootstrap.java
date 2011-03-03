@@ -177,10 +177,11 @@ public class Bootstrap {
 		copyBasicProxyDirectory("htdocs", baseCPEntries);
 		copyBasicProxyDirectory("plugins", baseCPEntries);
 		
+		discoverAndMergeVariables(baseCPEntries);
+		
 		discoverAndCopyBundlePlugins(baseCPEntries);
 		discoverAndCopyBundleAssets(baseCPEntries);
 		
-		discoverAndMergeVariables(baseCPEntries);
 		copyCommonFiles();
 		
 		ProxyStarter.main(args);
