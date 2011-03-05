@@ -1,7 +1,6 @@
 package sk.fiit.peweproxy;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
@@ -11,11 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 import rabbit.proxy.ProxyStarter;
 import sk.fiit.peweproxy.utils.XMLFileParser;
@@ -118,8 +112,7 @@ public class Bootstrap {
 	}
 	
 	private static void discoverAndMergeVariables(Collection<File> baseCPEntries) throws IOException {
-		File discoveredDirectory = null;
-		Document document = XMLFileParser.parseFile(new File("common/variables.xml"));		
+		Document globalDocument = XMLFileParser.parseFile(new File("common/variables.xml"));
 		
 		for (File file : baseCPEntries) {
 			if(file.getAbsolutePath().endsWith("plugins")) {
@@ -131,39 +124,13 @@ public class Bootstrap {
 				});
 				
 				for (File variablesFile : variablesFiles){
-					System.out.println(variablesFile.getAbsoluteFile());
+					Document localDocument = XMLFileParser.parseFile(variablesFile.getAbsoluteFile());
 					
-					Document bundleDocument = XMLFileParser.parseFile(variablesFile.getAbsoluteFile());
-	
-					// magic
-					Node variableElement = bundleDocument.getDocumentElement().getFirstChild().getNextSibling();
-					
-					while (variableElement != null){
-						System.out.println(variableElement.hasAttributes());
-						
-						Element element = document.createElement("variable");
-						element.setAttribute("name", variableElement.getAttributes().getNamedItem("name").getNodeValue());
-						element.setTextContent(variableElement.getTextContent());
-						
-						document.getDocumentElement().appendChild(element);
-						variableElement = variableElement.getNextSibling().getNextSibling();
-					}
+					XMLUtils.appendVariables(globalDocument, localDocument);
 				}
-				discoveredDirectory = file;
 			}
 		}
-		
-		OutputFormat format = new OutputFormat(document);
-		format.setIndenting(true);
-		XMLSerializer serializer = new XMLSerializer(
-				new FileOutputStream(new File("plugins/merged_variables.xml")), format); 
-		
-		serializer.serialize(document);
-		
-		if(discoveredDirectory != null) {
-			System.out.println(baseCPEntries);
-			baseCPEntries.remove(discoveredDirectory);
-		}
+		XMLUtils.writeDocument(globalDocument);
 	}
 	
 	private static void copyCommonFiles() throws IOException {
